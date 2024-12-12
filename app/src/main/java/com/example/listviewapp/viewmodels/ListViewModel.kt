@@ -1,5 +1,6 @@
 package com.example.listviewapp.viewmodels
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -19,12 +20,11 @@ class ListViewModel : ViewModel() {
     // Function to fetch animals from the API
     fun fetchAnimals() {
         ApiService.getAnimals { animals ->
-            if (animals != null && animals.isNotEmpty()) {
-                // Update the LiveData with the fetched list of animals
+            if (!animals.isNullOrEmpty()) {
+                Log.d("ListViewModel", "Fetched animals: $animals") // Add this
                 _animalList.postValue(animals)
             } else {
-                // Handle empty list or null response
-                _animalList.postValue(emptyList())  // Post an empty list if no animals are found
+                _animalList.postValue(emptyList())
                 _error.postValue("No animals found")
             }
         }
@@ -51,5 +51,28 @@ class ListViewModel : ViewModel() {
             }
         }
     }
+
+    fun updateAnimal(id: Int, newName: String) {
+        ApiService.updateAnimal(id, newName) { isSuccess ->
+            if (isSuccess) {
+                fetchAnimals() // Reload the list to reflect the updated name
+            } else {
+                _error.postValue("Failed to update animal.")
+            }
+        }
+    }
+
+    fun addAnimal(animal: Animal) {
+        ApiService.addAnimal(animal) { isSuccess ->
+            if (isSuccess) {
+                Log.d("ListViewModel", "Animal added successfully.") // Add this
+                fetchAnimals() // Ensure this is executed after success
+            } else {
+                Log.e("ListViewModel", "Failed to add animal.")
+                _error.postValue("Failed to add animal.")
+            }
+        }
+    }
+
 }
 

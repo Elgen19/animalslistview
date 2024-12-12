@@ -12,7 +12,7 @@ import java.net.URL
 
 object ApiService {
 
-    private const val API_URL = "https://cab46cf5c84168fdfe1f.free.beeceptor.com/api/animal/"
+    private const val API_URL = "https://ca5bd1573bbd92a5d8e0.free.beeceptor.com/api/animal/"
 
     // Function to fetch animals from the API using HttpURLConnection
     fun getAnimals(onResult: (List<Animal>?) -> Unit) {
@@ -94,6 +94,64 @@ object ApiService {
             }
         }.start()
     }
+
+    fun updateAnimal(animalId: Int, newName: String, onResult: (Boolean) -> Unit) {
+        Thread {
+            try {
+                val url = URL("$API_URL$animalId")
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "PUT"
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.doOutput = true
+
+                val jsonBody = JSONObject()
+                jsonBody.put("name", newName)
+
+                connection.outputStream.write(jsonBody.toString().toByteArray())
+                connection.outputStream.flush()
+
+                val responseCode = connection.responseCode
+                onResult(responseCode == HttpURLConnection.HTTP_OK)
+
+                connection.disconnect()
+            } catch (e: Exception) {
+                Log.e("ApiService", "Error updating animal: ${e.message}")
+                onResult(false)
+            }
+        }.start()
+    }
+
+    fun addAnimal(animal: Animal, onResult: (Boolean) -> Unit) {
+        Thread {
+            try {
+                val url = URL(API_URL)
+                val connection = url.openConnection() as HttpURLConnection
+                connection.requestMethod = "POST"
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.doOutput = true
+
+                val jsonBody = JSONObject()
+                jsonBody.put("id", animal.id)
+                jsonBody.put("name", animal.name)
+
+                connection.outputStream.write(jsonBody.toString().toByteArray())
+                connection.outputStream.flush()
+
+                val responseCode = connection.responseCode
+                Log.d("ApiService", "Add Animal Response Code: $responseCode") // Add this
+                // Consider both 201 and 200 as successful responses
+                onResult(responseCode == HttpURLConnection.HTTP_CREATED || responseCode == HttpURLConnection.HTTP_OK)
+
+
+                connection.disconnect()
+            } catch (e: Exception) {
+                Log.e("ApiService", "Error adding animal: ${e.message}")
+                onResult(false)
+            }
+        }.start()
+    }
+
+
 
     // Helper function to parse the JSON response into a list of Animal objects
     private fun parseAnimalResponse(response: String): List<Animal> {
