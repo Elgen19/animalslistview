@@ -24,76 +24,58 @@ class ListFragment : Fragment() {
     private lateinit var viewModel: ListViewModel
     private lateinit var listAdapter: ListAdapter
 
+
+
+
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Inflate the layout for this fragment
         val rootView = inflater.inflate(R.layout.fragment_list, container, false)
 
-        // Initialize the ViewModel
-        viewModel = ViewModelProvider(this).get(ListViewModel::class.java)
-
-        // Initialize the ListView
+        viewModel = ViewModelProvider(requireActivity()).get(ListViewModel::class.java)
         listView = rootView.findViewById(R.id.listView)
 
-        // Observe changes to the animal list
-        // Observe changes to the animal list
-        viewModel.animalList.observe(viewLifecycleOwner, Observer { animals ->
-            if (animals != null && animals.isNotEmpty()) {
-                Log.d("ListFragment", "Animal list updated: $animals")
+        // Initialize the adapter with an empty list
+        listAdapter = ListAdapter(
+            requireContext(),
+            onDeleteClicked = { animal -> viewModel.deleteAnimal(animal.id) },
+            onEditClicked = { animal -> showEditDialog(animal) }
+        )
+        listView.adapter = listAdapter
 
-                // Update the adapter or reinitialize it if necessary
-                listAdapter = ListAdapter(
-                    requireContext(),
-                    animals, // The new list of animals
-                    onDeleteClicked = { animal -> viewModel.deleteAnimal(animal.id) },
-                    onEditClicked = { animal -> showEditDialog(animal) }
-                )
-                listView.adapter = listAdapter
-
-                // Optionally, notify the adapter of the change
-                listAdapter.notifyDataSetChanged()
-            } else {
-                Toast.makeText(requireContext(), "No animals found", Toast.LENGTH_SHORT).show()
+        // Observe the animal list LiveData
+        viewModel.animalList.observe(viewLifecycleOwner) { animals ->
+            if (animals != null) {
+                // Update adapter with the new data
+                listAdapter.updateData(animals)
+                listAdapter.notifyDataSetChanged() // Refresh the ListView
             }
-        })
+        }
 
-        // Observe errors (optional)
-        viewModel.error.observe(viewLifecycleOwner, Observer { errorMessage ->
-            if (errorMessage != null) {
-                // Show error message (e.g., using a Toast)
-                Toast.makeText(requireContext(), errorMessage, Toast.LENGTH_SHORT).show()
-            }
-        })
-
-        // Fetch the animals when the fragment is created
         viewModel.fetchAnimals()
 
         return rootView
     }
 
-    // Function to show the edit dialog
+
+
     private fun showEditDialog(animal: Animal) {
         val builder = AlertDialog.Builder(requireContext())
         val inflater = layoutInflater
         val dialogView = inflater.inflate(R.layout.dialog_update_animal, null)
         builder.setView(dialogView)
 
-        // Find views from the dialog layout
         val editText = dialogView.findViewById<EditText>(R.id.editAnimalName)
         val saveButton = dialogView.findViewById<Button>(R.id.saveButton)
 
-        // Pre-fill the EditText with the current animal name
         editText.setText(animal.name)
 
         val dialog = builder.create()
 
-        // Set up the Save button click listener
         saveButton.setOnClickListener {
             val updatedName = editText.text.toString().trim()
             if (updatedName.isNotEmpty()) {
-                // Call ViewModel to update the animal
                 viewModel.updateAnimal(animal.id, updatedName)
                 dialog.dismiss()
             } else {
@@ -103,5 +85,5 @@ class ListFragment : Fragment() {
 
         dialog.show()
     }
-
 }
+

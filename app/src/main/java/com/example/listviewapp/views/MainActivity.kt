@@ -3,6 +3,8 @@ package com.example.listviewapp.views
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ListAdapter
+import android.widget.ListView
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AlertDialog
@@ -12,17 +14,17 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.listviewapp.R
 import androidx.fragment.app.FragmentTransaction
+import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
 import com.example.listviewapp.model.Animal
 import com.example.listviewapp.viewmodels.ListViewModel
 
 class MainActivity : AppCompatActivity() {
+
     private lateinit var viewModel: ListViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
-
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContentView(R.layout.activity_main)
 
         // Initialize the ViewModel
@@ -46,13 +48,6 @@ class MainActivity : AppCompatActivity() {
             transaction.replace(R.id.fragmentContainer, fragment)  // Replace the fragment container with ListFragment
             transaction.commit()  // Commit the transaction
         }
-
-        // Set up Window Insets listener (if you need edge-to-edge support)
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
-            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
-            insets
-        }
     }
 
     // Function to show the Add Animal dialog
@@ -62,21 +57,21 @@ class MainActivity : AppCompatActivity() {
         val dialogView = inflater.inflate(R.layout.dialog_add_animal, null)
         builder.setView(dialogView)
 
-        // Find views from the dialog layout
         val editText = dialogView.findViewById<EditText>(R.id.addAnimalName)
         val saveButton = dialogView.findViewById<Button>(R.id.addSaveButton)
 
         val dialog = builder.create()
 
-        // Set up the Save button click listener
         saveButton.setOnClickListener {
             val animalName = editText.text.toString().trim()
             if (animalName.isNotEmpty()) {
                 val randomId = (1..1000).random() // Generate a random ID
                 val newAnimal = Animal(randomId, animalName)
 
-                viewModel.addAnimal(newAnimal) // Add the new animal through ViewModel
-                dialog.dismiss()
+                // Call ViewModel to add the animal
+                viewModel.addAnimal(newAnimal)
+
+                dialog.dismiss() // Dismiss the dialog
             } else {
                 Toast.makeText(this, "Name cannot be empty", Toast.LENGTH_SHORT).show()
             }

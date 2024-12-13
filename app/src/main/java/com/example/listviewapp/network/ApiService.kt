@@ -1,5 +1,7 @@
 package com.example.listviewapp.network
 
+import android.os.Handler
+import android.os.Looper
 import android.util.Log
 import com.example.listviewapp.model.Animal
 import org.json.JSONArray
@@ -12,7 +14,7 @@ import java.net.URL
 
 object ApiService {
 
-    private const val API_URL = "https://ca5bd1573bbd92a5d8e0.free.beeceptor.com/api/animal/"
+    private const val API_URL = "https://cac5754ad4201481fd3d.free.beeceptor.com/api/animal/"
 
     // Function to fetch animals from the API using HttpURLConnection
     fun getAnimals(onResult: (List<Animal>?) -> Unit) {
@@ -138,10 +140,10 @@ object ApiService {
                 connection.outputStream.flush()
 
                 val responseCode = connection.responseCode
-                Log.d("ApiService", "Add Animal Response Code: $responseCode") // Add this
-                // Consider both 201 and 200 as successful responses
-                onResult(responseCode == HttpURLConnection.HTTP_CREATED || responseCode == HttpURLConnection.HTTP_OK)
+                Log.d("ApiService", "Add Animal Response Code: $responseCode")
 
+                // Check if the response is HTTP_OK or HTTP_CREATED
+                onResult(responseCode == HttpURLConnection.HTTP_CREATED || responseCode == HttpURLConnection.HTTP_OK)
 
                 connection.disconnect()
             } catch (e: Exception) {
@@ -150,6 +152,9 @@ object ApiService {
             }
         }.start()
     }
+
+
+
 
 
 
